@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   api:
-    image: node:21-alpine3.18
+    build:
+      context: ./docker/api
+      dockerfile: Dockerfile
     container_name: api
     restart: always
     tty: true
