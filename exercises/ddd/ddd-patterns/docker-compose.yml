@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  ddd-patterns:
+    image: node:24-alpine
+    container_name: ddd-patterns
+    restart: always
+    tty: true
+    mem_limit: 512m
+    cpus: 2
+    working_dir: /app
+    entrypoint: ['/bin/sh', '-c', 'npm i && sh']
+    volumes:
+      - ./:/app
