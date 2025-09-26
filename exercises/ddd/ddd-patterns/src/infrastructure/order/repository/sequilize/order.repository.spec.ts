@@ -9,6 +9,7 @@ import OrderRepository from "./order.repository";
 import Product from "@domain/product/entity/product";
 import ProductRepository from "@infrastructure/product/repository/sequelize/product.repository";
 import { sequilizeInstance } from "@infrastructure/utils/test-helper";
+import OrderItemModel from "./order-item.model";
 
 describe("Order repository test", () => {
   let sequelize: Sequelize;
@@ -27,10 +28,10 @@ describe("Order repository test", () => {
     return customer;
   };
 
-  const newProduct = async (id: string, quantity = 10) => {
+  const newProduct = async (id: string, price = 10) => {
     const productRepository = new ProductRepository();
 
-    const product = new Product(id, `Product ${id}`, quantity);
+    const product = new Product(id, `Product ${id}`, price);
 
     await productRepository.create(product);
 
@@ -157,6 +158,51 @@ describe("Order repository test", () => {
       });
 
       expect(orderExpected).toBeNull();
+    });
+  });
+
+  describe("update", () => {
+    it.only("should change the items and update the total", async () => {
+      const product = await newProduct("1");
+      const order = await newOrder("1", product);
+      const orderRepository = new OrderRepository();
+      let orderResponse = await orderRepository.find(order.id);
+
+      expect(orderResponse.total()).toEqual(20);
+      expect(orderResponse.items).toEqual(order.items);
+
+      const product2 = await newProduct("2");
+
+      const orderItem = new OrderItem(
+        order.id,
+        product2.name,
+        product2.price,
+        product2.id,
+        1,
+      );
+
+      order.addItem(orderItem);
+
+      await orderRepository.update(order);
+
+      const orderExpected = await OrderModel.findOne({
+        where: { id: order.id },
+        include: ["items"],
+      });
+
+      expect(orderExpected.toJSON()).toStrictEqual({
+        id: order.id,
+        customer_id: order.customerId,
+        total: order.total(),
+        items: order.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          product_id: item.productId,
+          quantity: item.quantity,
+          order_id: order.id,
+        })),
+      });
     });
   });
 });

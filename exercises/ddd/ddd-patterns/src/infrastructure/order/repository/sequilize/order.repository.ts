@@ -52,20 +52,22 @@ export default class OrderRepository {
   }
 
   async update(entity: Order): Promise<void> {
-    throw 'not implemented'
+    entity.items.forEach(async (item) => {
+      await OrderItemModel.upsert({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        product_id: item.productId,
+        order_id: entity.id,
+      });
+    });
+  
     await OrderModel.update(
+      { total: entity.total() },
       {
-        total: entity.total(),
-        items: entity.items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          product_id: item.productId,
-          quantity: item.quantity,
-        })),
-      },
-      {
-        where: { id: entity.id },
+        where: {
+          id: entity.id,
+        },
       },
     );
   }
