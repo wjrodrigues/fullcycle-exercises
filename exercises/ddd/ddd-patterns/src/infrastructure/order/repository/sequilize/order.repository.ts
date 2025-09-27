@@ -2,8 +2,15 @@ import Order from "@domain/checkout/entity/order";
 import OrderItemModel from "./order-item.model";
 import OrderModel from "./order.model";
 import OrderItem from "@domain/checkout/entity/order_item";
+import { Sequelize } from "sequelize";
 
 export default class OrderRepository {
+  private _instance: Sequelize
+
+  constructor(instance: Sequelize) {
+    this._instance = instance
+  }
+
   async create(entity: Order): Promise<void> {
     await OrderModel.create(
       {
@@ -52,24 +59,36 @@ export default class OrderRepository {
   }
 
   async update(entity: Order): Promise<void> {
-    entity.items.forEach(async (item) => {
-      await OrderItemModel.upsert({
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        product_id: item.productId,
-        order_id: entity.id,
+    const transaction = await this._instance.transaction();
+
+    try {
+      await OrderItemModel.destroy({
+        where: { order_id: entity.id },
       });
-    });
-  
-    await OrderModel.update(
-      { total: entity.total() },
-      {
-        where: {
-          id: entity.id,
+
+      entity.items.forEach(async (item) => {
+        await OrderItemModel.create({
+          id: item.id,
+          order_id: entity.id,
+          quantity: item.quantity,
+          name: item.name,
+          price: item.price,
+          product_id: item.productId,
+        });
+      });
+
+      await OrderModel.update(
+        { total: entity.total() },
+        {
+          where: {
+            id: entity.id,
+          },
         },
-      },
-    );
+      );
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+    }
   }
 
   private parseItems = (entity: OrderModel): OrderItem[] => {

@@ -9,7 +9,6 @@ import OrderRepository from "./order.repository";
 import Product from "@domain/product/entity/product";
 import ProductRepository from "@infrastructure/product/repository/sequelize/product.repository";
 import { sequilizeInstance } from "@infrastructure/utils/test-helper";
-import OrderItemModel from "./order-item.model";
 
 describe("Order repository test", () => {
   let sequelize: Sequelize;
@@ -50,7 +49,7 @@ describe("Order repository test", () => {
     const customer = await newCustomer(id);
     const order = new Order(id, customer.id, [orderItem]);
 
-    const orderRepository = new OrderRepository();
+    const orderRepository = new OrderRepository(sequelize);
 
     await orderRepository.create(order);
 
@@ -97,7 +96,7 @@ describe("Order repository test", () => {
 
       expect(ordersExpected.length).toEqual(4);
 
-      const orderRepository = new OrderRepository();
+      const orderRepository = new OrderRepository(sequelize);
       const ordersResponse = await orderRepository.findAll();
 
       ordersExpected.forEach((orderExpected: any, idx: number) => {
@@ -134,7 +133,7 @@ describe("Order repository test", () => {
         include: ["items"],
       });
 
-      const orderRepository = new OrderRepository();
+      const orderRepository = new OrderRepository(sequelize);
       const orderResponse = await orderRepository.find(order.id);
 
       expect(orderExpected.toJSON()).toStrictEqual({
@@ -162,10 +161,10 @@ describe("Order repository test", () => {
   });
 
   describe("update", () => {
-    it.only("should change the items and update the total", async () => {
+    it("should change the items and update the total", async () => {
       const product = await newProduct("1");
       const order = await newOrder("1", product);
-      const orderRepository = new OrderRepository();
+      const orderRepository = new OrderRepository(sequelize);
       let orderResponse = await orderRepository.find(order.id);
 
       expect(orderResponse.total()).toEqual(20);
@@ -174,7 +173,7 @@ describe("Order repository test", () => {
       const product2 = await newProduct("2");
 
       const orderItem = new OrderItem(
-        order.id,
+        "2",
         product2.name,
         product2.price,
         product2.id,
