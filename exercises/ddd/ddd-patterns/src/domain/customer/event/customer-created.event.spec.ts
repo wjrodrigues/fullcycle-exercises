@@ -1,7 +1,7 @@
 import EventDispatcher from "@domain/@shared/event/event-dispatcher";
 import CustomerCreatedEvent from "./customer-created.event";
-import SendConsoleLogFirstHandler from "./handler/send-console-log-first-handler.handler";
-import SendConsoleLogSecondHandler from "./handler/send-console-log-second-handler.handler";
+import SendConsoleLogFirstHandler from "./handler/send-console-log-first.handler";
+import SendConsoleLogSecondHandler from "./handler/send-console-log-second.handler";
 
 describe("CustomerCreatedEvent", () => {
   it("should register an event handler", () => {
